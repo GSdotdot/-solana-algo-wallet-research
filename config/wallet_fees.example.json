@@ -1,0 +1,17 @@
+{
+  "_comment": "Per-wallet priority+bribe (validator tip) cost in USD PER LEG, address-keyed. Copy to wallet_fees.json (gitignored) and fill in real addresses and fees. These are the only costs not already embedded in PnL (DEX fee and slippage are inside the recorded trade amounts). net_pnl_usd = gross_pnl_usd - attributed buy/sell leg fees. For a wallet whose fee varies, use its blended average.",
+  "default": {
+    "buy_usd": 0.0,
+    "sell_usd": 0.0
+  },
+  "wallets": {
+    "<WALLET_01_ADDRESS>": {
+      "buy_usd": "XXXX",
+      "sell_usd": "XXXX"
+    },
+    "<WALLET_02_ADDRESS>": {
+      "buy_usd": "XXXX",
+      "sell_usd": "XXXX"
+    }
+  }
+}

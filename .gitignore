@@ -1,0 +1,51 @@
+# secrets and private configuration
+.env
+.env.*
+!.env.example
+config.local.yaml
+config/wallets.json
+config/wallet_fees.json
+**/wallets.json
+**/wallet_fees.json
+*.pem
+*.key
+*keypair*.json
+id_rsa*
+id_ed25519*
+
+# data, databases, exports, logs (nothing collected is ever committed)
+data/
+exports/
+logs/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.parquet
+*.csv
+*.csv.gz
+*.xlsx
+*.zip
+*.log
+analysis/outputs/
+export_state.json
+*.ipynb
+.ipynb_checkpoints/
+*.docx
+*.pptx
+*.pdf
+
+# the masked sample is the only data in the repository
+!sample_data/*.csv
+
+# private notes and assistant files
+.claude/
+CLAUDE.md
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/

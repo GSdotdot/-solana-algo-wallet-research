@@ -1,0 +1,242 @@
+# Test configuration. EVERY VALUE HERE IS MADE UP for the unit tests: round,
+# illustrative numbers and invented provider field names chosen only so the logic can
+# be exercised offline. None of them is a value used in the real project.
+
+collector:
+  ws: { ping_interval_sec: 11, backoff_base_sec: 2, backoff_max_sec: 8, open_timeout_sec: 7 }
+  rest: { timeout_sec: 9, max_retries: 2, backoff_base_sec: 0.5, backoff_max_sec: 4.0 }
+  archive: { snapshot_interval_sec: 7, buffer_size: 10, flush_interval_sec: 13 }
+  polling:
+    stats_poll_interval_sec: 17
+    stats_poll_coarse_sec: 41
+    holder_breakdown_full_sec: 53
+    post_exit_full_sec: 70
+    price_poll_interval_sec: 7
+    batch_price_max: 3
+    at_trade_debounce_sec: 9
+  budget: { pace_per_day: 1000.0, throttle_warmup_sec: 100, hard_ceiling: 5000.0 }
+  b_wallets: { labels: [WALLET_TEST_B], price_post_exit_sec: 45 }
+  ticks: { retention_hrs: 2, flush_interval_sec: 3, prune_interval_sec: 30 }
+  lifecycle:
+    hard_ceiling_sec: 900
+    quick_hold_sec: 20
+    frequent_trades_today: 4
+    grace_tiers: { short: 30, medium: 90, long: 400 }
+  enrichment: { ohlcv_backfill_sec: 600, recent_trades_pages: 2, recent_trades_page_size: 10 }
+  positions: { dust_fraction: 0.02, flip_window_sec: 25 }
+  fees:
+    dex_fee_tiers: [[1000, 0.03], [5000, 0.02], [null, 0.01]]
+  export: { snapshot_row_cap: 1000, fast_exit_sec: 3 }
+  recompute: { busy_timeout_ms: 1000 }
+
+analysis:
+  cv_folds: 3
+  wallets:
+    fast_scalpers: [WALLET_TEST_B]
+    dormant: [WALLET_TEST_Z]
+    tier_deep: [WALLET_TEST_A]
+    tier_moderate: [WALLET_TEST_B]
+  data: { state_recovery_window_sec: 10 }
+  features:
+    entry_coverage_tol_sec: 15
+    vol_accel_lag_sec: 40
+    cadence_sec:
+      holder: 50
+      liquidity: 50
+      top10_holder_percentage: 50
+      market_cap: 10
+      fdv: 10
+      price: 10
+      progress_percent: 30
+      sniper_held_percentage: 50
+      bundler_held_percentage: 50
+      insider_held_percentage: 50
+      dev_held_percentage: 50
+      total_supply: 100
+      circulating_supply: 100
+      real_sol_reserves: 50
+      real_token_reserves: 50
+      virtual_token_reserves: 50
+    delta_windows:
+      holder: [60, 200]
+      liquidity: [60]
+      market_cap: [20]
+      top10_holder_percentage: [60]
+      progress_percent: [40]
+      sniper_held_percentage: [60]
+      bundler_held_percentage: [60]
+      insider_held_percentage: [60]
+      dev_held_percentage: [60]
+      real_sol_reserves: [60]
+  profile:
+    hold_regime_bounds_sec: [10, 100, 1000]
+    narrow_size_cv_max: 0.5
+    distinctive_top_k: 3
+    min_relative_mad: 0.01
+  entry:
+    baseline_samples: 200
+    min_class_count: 5
+    univariate_min_obs: 10
+    report_top_n: 3
+    model: { max_depth: 2, max_iter: 20, learning_rate: 0.2 }
+    rule_tree: { max_depth: 2, min_samples_leaf: 5 }
+  exit:
+    min_obs: 2
+    obs_cap: 20
+    min_class_count: 5
+    univariate_min_obs: 10
+    era_min_positions: 5
+    partial_exit_min_rate: 0.5
+    survival_report_horizon_sec: 10
+    report_top_n: 3
+    momentum_lags_sec: { fast: 2, slow: 8 }
+    dynamics_lags_sec: { vol_accel: 10, holder_short: 10, holder_long: 20, top10: 10, liquidity: 10, trader_class: 10 }
+    bar_volume_windows_sec: { fast: 2, slow: 8 }
+    model: { max_depth: 2, max_iter: 20, learning_rate: 0.2 }
+    rule_tree: { max_depth: 2, min_leaf_floor: 5, leaf_panel_divisor: 10 }
+    temporal_holdout: { train_frac: 0.5, min_events: 2 }
+    verdict: { family_lift_min: 0.3, decodable_min: 0.3 }
+  sizing:
+    min_rows: 10
+    min_wallet_entries: 10
+    correlate_min_obs: 5
+    correlate_min_unique: 2
+    report_top_n: 2
+    model: { max_depth: 2, max_iter: 20 }
+    verdict: { min_r2_over_null: 0.5, fixed_clip_cv_max: 0.01, conviction_min_abs_corr: 0.5 }
+  cross_wallet:
+    min_shared_tokens: 2
+    top_recurring_n: 3
+    strong_pair: { min_shared_tokens: 2, min_lead_rate: 0.9 }
+  indicators:
+    periods: [2, 4]
+    min_bars: 3
+    baseline_samples: 50
+    train_token_frac: 0.5
+    report_top_n: 2
+    auc_min: { total: 6, per_class: 2 }
+    validation: { min_test_share: 0.9, strong_abs_auc: 0.4 }
+  rules:
+    top_indicators_n: 2
+    role_rank_bounds: [0.25, 0.75]
+    consistent_lead_rate: 0.99
+
+store:
+  cadence_sample_mod: 2
+
+data_provider:
+  rest:
+    auth_header: X-Test-Key
+    base_headers: { X-Test-Client: unit-tests }
+  ws:
+    url_template: "{base}/stream?token={key}"
+    headers: {}
+    subprotocols: [test-protocol]
+    type_key: kind
+    data_key: body
+    wallet_txs_event: WALLET_TX
+    price_event: PRICE_BAR
+    price_bar_granularity: fine
+    subscribe_wallet_template: { kind: WATCH_WALLET, body: { wallet: "{wallet}" } }
+    subscribe_price_template: { kind: WATCH_PRICE, body: { token: "{token}", bar: "{granularity}" } }
+  requests:
+    token_stats:   { path: /t/stats, params: { token: "{token}" }, credits: 2 }
+    holder_breakdown:   { path: /t/holders, params: { token: "{token}" }, credits: 3 }
+    launchpad_detail: { path: /t/launchpad, params: { token: "{token}" }, credits: 2 }
+    price_history:    { path: /t/bars, params: { token: "{token}", start: "{time_from}", end: "{time_to}" }, credits: 4 }
+    recent_trades:    { path: /t/trades, params: { token: "{token}", before: "{before}", n: "{limit}" }, credits: 1 }
+    top_traders:      { path: /t/top, params: { token: "{token}" }, credits: 2 }
+    batch_price:      { path: /t/prices, params: { tokens: "{tokens}" }, credits_base: 1.0, credits_exponent: 0.5 }
+  response_fields:
+    envelope: payload
+    blob_items: rows
+    token_stats:
+      holder: n_holders
+      market_cap: mcap
+      fdv: fdv_usd
+      liquidity: liq
+      total_supply: supply_total
+      circulating_supply: supply_circ
+      price: px
+      windows:
+        buy_count: "buys_{w}"
+        sell_count: "sells_{w}"
+        volume_usd: "vol_{w}"
+        volume_buy_usd: "vol_buy_{w}"
+        volume_sell_usd: "vol_sell_{w}"
+        volume_change_percent: "vol_chg_{w}"
+    identity:
+      token_name: title
+      token_symbol: ticker
+      decimals: dp
+      logo_uri: logo
+      extensions: extra
+      twitter: tw
+      website: web
+      description: about
+    holder_breakdown:
+      token_block: tok
+      top10_block: top10
+      percent_of_supply: pct
+      tags: groups
+      tag_name: group
+      holder_count: n
+    launchpad_detail:
+      info_block: launch
+      pool_block: curve
+      graduated: done
+      progress_percent: progress
+      real_sol_reserves: sol_real
+      real_token_reserves: tok_real
+      virtual_token_reserves: tok_virtual
+    batch_price:
+      price: px
+    wallet_tx:
+      tx_type: kind
+      swap_type_value: trade
+      tx_hash: sig
+      owner: wallet
+      block_time: ts
+      slot: slot
+      pool_address: pool
+      program_id: program
+      source_name: venue
+      volume_usd: usd
+      from_leg: spent
+      to_leg: received
+      leg_address: mint
+      leg_ui_amount: qty
+      leg_symbol: sym
+    price_bar:
+      token: mint
+      bar_time: ts
+      open: bar_o
+      high: bar_hi
+      low: bar_lo
+      close: bar_c
+      volume: vol
+      volume_usd: vol_usd
+    ohlcv_backfill:
+      open: op
+      high: hi
+      low: lo
+      close: cl
+      volume: vol
+      bar_time: ts
+    top_traders:
+      owner: who
+      realized_pnl: pnl
+      volume: vol
+    recent_trades:
+      list_keys: [rows, trades]
+      block_time: ts
+      side: way
+      sell_side_value: S
+      owner: who
+      source: venue
+      base_leg: leg_in
+      quote_leg: leg_out
+      leg_ui_amount: qty
+      quote_price: quote_px
+      token_price: px
+      base_price: base_px

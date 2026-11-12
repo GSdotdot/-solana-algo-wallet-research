@@ -1,0 +1,37 @@
+{
+  "_comment": "Example watchlist. Copy to wallets.json (gitignored) and fill in real addresses. Labels are free text; this project uses neutral pseudonyms so that no address, or fragment of one, appears in code, logs or outputs. Entries whose address starts with '<' are ignored by the loader.",
+  "target_wallets": [
+    {
+      "address": "<WALLET_01_ADDRESS>",
+      "label": "WALLET_01"
+    },
+    {
+      "address": "<WALLET_02_ADDRESS>",
+      "label": "WALLET_02"
+    },
+    {
+      "address": "<WALLET_03_ADDRESS>",
+      "label": "WALLET_03"
+    },
+    {
+      "address": "<WALLET_04_ADDRESS>",
+      "label": "WALLET_04"
+    },
+    {
+      "address": "<WALLET_05_ADDRESS>",
+      "label": "WALLET_05"
+    },
+    {
+      "address": "<WALLET_06_ADDRESS>",
+      "label": "WALLET_06"
+    },
+    {
+      "address": "<WALLET_07_ADDRESS>",
+      "label": "WALLET_07"
+    },
+    {
+      "address": "<WALLET_08_ADDRESS>",
+      "label": "WALLET_08"
+    }
+  ]
+}

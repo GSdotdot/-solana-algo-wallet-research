@@ -1,0 +1,7 @@
+# Collector runtime
+websockets>=14
+aiohttp>=3.9
+python-dotenv>=1.0
+pyyaml>=6.0
+# Excel workbook deliverable (collector.excel_export only)
+openpyxl>=3.1

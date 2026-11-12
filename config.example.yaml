@@ -1,0 +1,326 @@
+# ═══════════════════════════════════════════════════════════════════════
+# config.example.yaml — PUBLIC TEMPLATE (all tuned values redacted)
+# ═══════════════════════════════════════════════════════════════════════
+# Every cadence, timeout, threshold, model setting, feature window, sweep grid
+# and data-provider detail used by the project lives here. In this public copy
+# each value is the placeholder XXXX ("tuned privately").
+#
+# The loader (common/params.py) resolves, in order:
+#   1. $WR_CONFIG            explicit path (used by the tests)
+#   2. ./config.local.yaml   private, gitignored — the real values
+#   3. this file             placeholders only
+#
+# With only this file present, every module imports and the architecture can
+# be navigated, but any use of a redacted value raises RedactedParameterError.
+# ═══════════════════════════════════════════════════════════════════════
+
+# ── Stage 1: collector ─────────────────────────────────────────────────
+collector:
+  ws:                               # WebSocket client (collector/ws_client.py)
+    ping_interval_sec: XXXX         # keepalive ping cadence (also the ping timeout)
+    backoff_base_sec: XXXX          # first reconnect delay; doubles each attempt
+    backoff_max_sec: XXXX           # reconnect delay cap
+    open_timeout_sec: XXXX          # connection handshake timeout
+  rest:                             # REST client (collector/rest_client.py)
+    timeout_sec: XXXX               # per-request timeout
+    max_retries: XXXX               # retries on 429 / 5xx / network errors
+    backoff_base_sec: XXXX
+    backoff_max_sec: XXXX
+  archive:                          # snapshot archive (collector/snapshot_archive.py)
+    snapshot_interval_sec: XXXX     # how often each tracked token's state is archived
+    buffer_size: XXXX               # flush the write buffer at this many rows ...
+    flush_interval_sec: XXXX        # ... or after this long, whichever comes first
+  polling:                          # per-token REST polling: the main lever on API-credit spend
+    stats_poll_interval_sec: XXXX   # token stats, full tier (token currently held)
+    stats_poll_coarse_sec: XXXX     # token stats, coarse tier (token in grace, nobody holding)
+    holder_breakdown_full_sec: XXXX   # holder breakdown, full tier only
+    post_exit_full_sec: XXXX        # how long a just-exited token stays on the full tier
+    price_poll_interval_sec: XXXX   # batch price call cadence
+    batch_price_max: XXXX           # tokens per batch price call
+    at_trade_debounce_sec: XXXX     # skip the at-trade poll if the token was polled this recently
+  budget:                           # API-credit guards (collector/stats_poller.py)
+    pace_per_day: XXXX              # credits/day pace; exceeding it pro rata engages the throttle
+    throttle_warmup_sec: XXXX       # grace period before the pace guard is evaluated
+    hard_ceiling: XXXX              # total credits at which all REST polling stops
+  b_wallets:                        # the fast-scalper subset that gets a dedicated 1s price stream
+    labels: XXXX                    # list of watchlist labels, e.g. [WALLET_03, ...]
+    price_post_exit_sec: XXXX       # keep the price socket open this long after the last B exit
+  ticks:                            # 1-second price-bar archive (collector/tick_archive.py)
+    retention_hrs: XXXX             # rolling retention window
+    flush_interval_sec: XXXX
+    prune_interval_sec: XXXX
+  lifecycle:                        # token subscription lifecycle (collector/subscriptions.py)
+    hard_ceiling_sec: XXXX          # unsubscribe after this long with no tracked trade
+    quick_hold_sec: XXXX            # a hold shorter than this is a "quick trade"
+    frequent_trades_today: XXXX     # trades today that mark a token as frequently re-entered
+    grace_tiers:                    # how long to keep watching after the last holder exits
+      short: XXXX                   # single quick trade
+      medium: XXXX                  # default
+      long: XXXX                    # frequently re-entered token
+  enrichment:                       # one-time REST burst per discovered token
+    ohlcv_backfill_sec: XXXX        # how much pre-discovery price history to pull
+    recent_trades_pages: XXXX       # pages of recent swaps to pull
+    recent_trades_page_size: XXXX
+  positions:                        # position tracking + labelling (collector/positions.py)
+    dust_fraction: XXXX             # remainder (fraction of peak size) still counted as a full exit
+    flip_window_sec: XXXX           # a re-entry this soon after an exit is labelled FLIP
+  fees:
+    dex_fee_tiers: XXXX             # [[mcap_ceiling_usd, rate], ..., [null, fallback_rate]]
+  export:
+    snapshot_row_cap: XXXX          # row cap for the Excel snapshot sheet
+    fast_exit_sec: XXXX             # exits faster than this are counted as "fast exits"
+  recompute:
+    busy_timeout_ms: XXXX           # SQLite busy timeout while the live collector is writing
+
+# ── Stage 2: analysis (Module C) ───────────────────────────────────────
+analysis:
+  cv_folds: XXXX                    # GroupKFold-by-token splits (shared by C2, C3, C4)
+  wallets:                          # groupings of the pseudonymised wallets (research findings)
+    fast_scalpers: XXXX             # labels of the shortest-hold wallets (they have 1s bars)
+    dormant: XXXX                   # labels with no trades in the window (excluded)
+    tier_deep: XXXX                 # labels with deep sample depth
+    tier_moderate: XXXX             # labels with moderate sample depth
+  data:
+    state_recovery_window_sec: XXXX # how far after an entry to look for the first usable snapshot
+  features:                         # shared feature factory (analysis/features.py)
+    entry_coverage_tol_sec: XXXX    # max distance from entry to nearest snapshot to count as covered
+    vol_accel_lag_sec: XXXX         # lag for the short-window volume acceleration feature
+    cadence_sec:                    # measured refresh cadence per field (minimum honest delta window)
+      holder: XXXX
+      liquidity: XXXX
+      top10_holder_percentage: XXXX
+      market_cap: XXXX
+      fdv: XXXX
+      price: XXXX
+      progress_percent: XXXX
+      sniper_held_percentage: XXXX
+      bundler_held_percentage: XXXX
+      insider_held_percentage: XXXX
+      dev_held_percentage: XXXX
+      total_supply: XXXX
+      circulating_supply: XXXX
+      real_sol_reserves: XXXX
+      real_token_reserves: XXXX
+      virtual_token_reserves: XXXX
+    delta_windows:                  # per field: list of delta windows (sec), each >= its cadence
+      holder: XXXX
+      liquidity: XXXX
+      market_cap: XXXX
+      top10_holder_percentage: XXXX
+      progress_percent: XXXX
+      sniper_held_percentage: XXXX
+      bundler_held_percentage: XXXX
+      insider_held_percentage: XXXX
+      dev_held_percentage: XXXX
+      real_sol_reserves: XXXX
+  profile:                          # C1
+    hold_regime_bounds_sec: XXXX    # [ultra_fast, fast, medium] upper bounds for the hold regime
+    narrow_size_cv_max: XXXX        # size dispersion below which sizing is called "narrow"
+    distinctive_top_k: XXXX         # distinctive features reported per wallet
+    min_relative_mad: XXXX          # features with less relative dispersion are skipped
+  entry:                            # C2
+    baseline_samples: XXXX          # random (token, time) states drawn as the non-buy baseline
+    min_class_count: XXXX           # minimum rows per class to score a model
+    univariate_min_obs: XXXX        # minimum rows to report a single-feature AUC
+    report_top_n: XXXX
+    model:                          # gradient-boosted classifier
+      max_depth: XXXX
+      max_iter: XXXX
+      learning_rate: XXXX
+    rule_tree:                      # shallow readable surrogate tree
+      max_depth: XXXX
+      min_samples_leaf: XXXX
+  exit:                             # C3
+    min_obs: XXXX                   # in-hold observations a position needs to be modelled
+    obs_cap: XXXX                   # cap on observations per position
+    min_class_count: XXXX
+    univariate_min_obs: XXXX
+    era_min_positions: XXXX         # positions needed to analyse a sub-period separately
+    partial_exit_min_rate: XXXX     # partial-exit share above which the sensitivity check runs
+    survival_report_horizon_sec: XXXX
+    report_top_n: XXXX
+    momentum_lags_sec:              # causal price momentum lookbacks
+      fast: XXXX
+      slow: XXXX
+    dynamics_lags_sec:              # on-chain change lookbacks, each >= the field's cadence
+      vol_accel: XXXX
+      holder_short: XXXX
+      holder_long: XXXX
+      top10: XXXX
+      liquidity: XXXX
+      trader_class: XXXX
+    bar_volume_windows_sec:         # 1s-bar volume burst: fast window vs slow window
+      fast: XXXX
+      slow: XXXX
+    model:
+      max_depth: XXXX
+      max_iter: XXXX
+      learning_rate: XXXX
+    rule_tree:
+      max_depth: XXXX
+      min_leaf_floor: XXXX          # leaf size = max(floor, panel_rows // divisor)
+      leaf_panel_divisor: XXXX
+    temporal_holdout:
+      train_frac: XXXX              # earliest share of positions used for training
+      min_events: XXXX              # exits needed on each side of the split
+    verdict:
+      family_lift_min: XXXX         # AUC lift over price alone for a feature family to count as a driver
+      decodable_min: XXXX           # AUC above the shuffle-null needed to call an exit trigger decodable
+  sizing:                           # C4
+    min_rows: XXXX
+    min_wallet_entries: XXXX
+    correlate_min_obs: XXXX
+    correlate_min_unique: XXXX
+    report_top_n: XXXX
+    model:                          # gradient-boosted regressor
+      max_depth: XXXX
+      max_iter: XXXX
+    verdict:
+      min_r2_over_null: XXXX        # R^2 above the shuffle-null to call sizing state-proportional
+      fixed_clip_cv_max: XXXX       # size dispersion below which sizing is a fixed clip
+      conviction_min_abs_corr: XXXX # |corr(size, return)| needed to call a conviction direction
+  cross_wallet:                     # C5
+    min_shared_tokens: XXXX         # co-traded tokens needed before a wallet pair is reported
+    top_recurring_n: XXXX           # how many recurring untracked owners to list
+    strong_pair:
+      min_shared_tokens: XXXX
+      min_lead_rate: XXXX           # share of shared tokens the leader entered first
+  indicators:                       # C6
+    periods: XXXX                   # list: the swept period ladder (bars)
+    min_bars: XXXX                  # bars a token needs for a usable indicator panel
+    baseline_samples: XXXX
+    train_token_frac: XXXX          # share of tokens used to select; the rest validate
+    report_top_n: XXXX
+    auc_min:
+      total: XXXX
+      per_class: XXXX
+    validation:
+      min_test_share: XXXX          # share of the train-set effect the test set must retain
+      strong_abs_auc: XXXX          # |AUC - 0.5| that counts as a strong effect
+  rules:                            # C7
+    top_indicators_n: XXXX
+    role_rank_bounds: XXXX          # [discoverer_below, follower_above] on the 0..1 entry rank
+    consistent_lead_rate: XXXX      # lead rate that counts as "consistently leads"
+
+# ── Stage 3: unified store ─────────────────────────────────────────────
+store:
+  cadence_sample_mod: XXXX          # keep 1-in-N tokens for the cadence measurement
+
+# ── Data provider (identity redacted) ──────────────────────────────────
+# Base URLs and the API key come from the environment (.env.example).
+data_provider:
+  rest:
+    auth_header: XXXX               # name of the API-key header
+    base_headers: XXXX              # dict of extra headers sent on every request
+  ws:
+    url_template: XXXX              # formatted with {base} (DATA_PROVIDER_WS_URL) and {key}
+    headers: XXXX                   # dict of extra handshake headers
+    subprotocols: XXXX              # list of WebSocket subprotocols to offer
+    type_key: XXXX                  # frame field holding the event type
+    data_key: XXXX                  # frame field holding the payload
+    wallet_txs_event: XXXX          # event type of a tracked-wallet transaction frame
+    price_event: XXXX               # event type of a price-bar frame
+    price_bar_granularity: XXXX     # granularity requested for the dedicated price stream
+    subscribe_wallet_template: XXXX # subscribe frame; {wallet} is filled in
+    subscribe_price_template: XXXX  # subscribe frame; {token} and {granularity} are filled in
+  requests:                         # one entry per REST call: path, query template, credit cost
+    token_stats:   { path: XXXX, params: XXXX, credits: XXXX }
+    holder_breakdown:   { path: XXXX, params: XXXX, credits: XXXX }
+    launchpad_detail: { path: XXXX, params: XXXX, credits: XXXX }
+    price_history:    { path: XXXX, params: XXXX, credits: XXXX }
+    recent_trades:    { path: XXXX, params: XXXX, credits: XXXX }
+    top_traders:      { path: XXXX, params: XXXX, credits: XXXX }
+    batch_price:      { path: XXXX, params: XXXX, credits_base: XXXX, credits_exponent: XXXX }
+  response_fields:                  # provider JSON key for each neutral field name
+    envelope: XXXX                  # top-level key wrapping every response payload
+    blob_items: XXXX                # key of the item list inside an enrichment blob
+    token_stats:
+      holder: XXXX
+      market_cap: XXXX
+      fdv: XXXX
+      liquidity: XXXX
+      total_supply: XXXX
+      circulating_supply: XXXX
+      price: XXXX
+      windows:                      # key templates; {w} is the window suffix (1m, 5m, ...)
+        buy_count: XXXX
+        sell_count: XXXX
+        volume_usd: XXXX
+        volume_buy_usd: XXXX
+        volume_sell_usd: XXXX
+        volume_change_percent: XXXX
+    identity:
+      token_name: XXXX
+      token_symbol: XXXX
+      decimals: XXXX
+      logo_uri: XXXX
+      extensions: XXXX
+      twitter: XXXX
+      website: XXXX
+      description: XXXX
+    holder_breakdown:
+      token_block: XXXX
+      top10_block: XXXX
+      percent_of_supply: XXXX
+      tags: XXXX
+      tag_name: XXXX
+      holder_count: XXXX
+    launchpad_detail:
+      info_block: XXXX
+      pool_block: XXXX
+      graduated: XXXX
+      progress_percent: XXXX
+      real_sol_reserves: XXXX
+      real_token_reserves: XXXX
+      virtual_token_reserves: XXXX
+    batch_price:
+      price: XXXX
+    wallet_tx:
+      tx_type: XXXX
+      swap_type_value: XXXX         # the tx_type value that marks a swap
+      tx_hash: XXXX
+      owner: XXXX
+      block_time: XXXX
+      slot: XXXX
+      pool_address: XXXX
+      program_id: XXXX
+      source_name: XXXX
+      volume_usd: XXXX
+      from_leg: XXXX
+      to_leg: XXXX
+      leg_address: XXXX
+      leg_ui_amount: XXXX
+      leg_symbol: XXXX
+    price_bar:
+      token: XXXX
+      bar_time: XXXX
+      open: XXXX
+      high: XXXX
+      low: XXXX
+      close: XXXX
+      volume: XXXX
+      volume_usd: XXXX
+    ohlcv_backfill:
+      open: XXXX
+      high: XXXX
+      low: XXXX
+      close: XXXX
+      volume: XXXX
+      bar_time: XXXX
+    top_traders:
+      owner: XXXX
+      realized_pnl: XXXX
+      volume: XXXX
+    recent_trades:
+      list_keys: XXXX               # candidate keys of the trade list, tried in order
+      block_time: XXXX
+      side: XXXX
+      sell_side_value: XXXX
+      owner: XXXX
+      source: XXXX
+      base_leg: XXXX
+      quote_leg: XXXX
+      leg_ui_amount: XXXX
+      quote_price: XXXX
+      token_price: XXXX
+      base_price: XXXX
